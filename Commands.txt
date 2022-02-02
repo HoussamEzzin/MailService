@@ -1,2 +1,30 @@
 apt-get update && apt-get upgrade -y
 apt-get install apache2 mariadb-server php7.0 -y
+apt-get install php7.0-mysql php7.0-mbstring php7.0-imap php7.0-xml php7.0-curl -y
+service apache2 restart
+apt-get install tree mailutils -y
+apt-get install postfix postfix-mysql -y
+apt-get install dovecot-mysql dovecot-pop3d dovecot-imapd dovecot-managesieved -y
+groupadd -g 5000 vmail
+useradd -g vmail -u 5000 vmail -d /var/vmail -m
+mysql_secure_installation
+mariadb -u root -p
+CREATE DATABASE postfix;
+CREATE USER 'postfix'@'localhost' IDENTIFIED BY 'choose_a_password';
+GRANT ALL PRIVILEGES ON `postfix` . * TO 'postfix'@'localhost';
+CREATE USER 'mailuser'@'localhost' IDENTIFIED BY 'choose_a_password';
+GRANT SELECT ON `postfix`.* TO 'mailuser'@'localhost';
+FLUSH PRIVILEGES;
+QUIT ;
+cd /srv/
+wget -O postfixadmin.tgz https://github.com/postfixadmin/postfixadmin/archive/postfixadmin-3.2.tar.gz
+tar -zxvf postfixadmin.tgz
+mv postfixadmin-postfixadmin-3.2 postfixadmin
+ln -s /srv/postfixadmin/public /var/www/html/postfixadmin
+nano /srv/postfixadmin/config.local.php
+mkdir -p /srv/postfixadmin/templates_c
+chown -R www-data /srv/postfixadmin/templates_c
+postconf -e virtual_mailbox_domains=mysql:/etc/postfix/mysql-virtual-mailbox-domains.cf
+postmap -q ent.lan mysql:/etc/postfix/mysql-virtual-mailbox-domains.cf
+postconf -e virtual_mailbox_maps=mysql:/etc/postfix/mysql-virtual-mailbox-maps.cf
+postmap -q informatique@ent.lan mysql:/etc/postfix/mysql-virtual-mailbox-maps.cf

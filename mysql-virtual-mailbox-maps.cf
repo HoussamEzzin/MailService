@@ -1,0 +1,5 @@
+user = mailuser
+password = choose_a_password
+hosts = 127.0.0.1
+dbname = postfix
+query = SELECT 1 FROM mailbox where username='%s'
